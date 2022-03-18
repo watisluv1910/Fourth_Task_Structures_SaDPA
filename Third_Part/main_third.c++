@@ -1,9 +1,8 @@
 #include <iostream>
 #include <string>
 #include <iomanip>
-#include "Bank_first.h"
+#include "Bank_third.h"
 #include "VariadicTable.h" // for pretty table output
-#define maxArrayLength 100
 
 using namespace std;
 
@@ -12,11 +11,11 @@ void outputMenu();
 // the bank in banks list:
 bool isCorrectPosition(int position, int maxPosition);
 // fills the main bank parameters:
-Bank inputBank(Bank bank);
-Bank inputBankServices(Bank bank);
+void inputBank(Bank& bank);
+void inputBankServices(Bank& bank);
 void removeBank(Banks& banks, int chosenIndex);
 // checks the existence of required bank parameters:
-bool isInList(Bank& bank, string key);
+bool isInList(string& bank, string key);
 // forms the list of appropriate banks:
 void formBanksList(Banks& banks, Banks& chosenBanks);
 void outputBanks(Banks& banks);
@@ -39,7 +38,7 @@ bool isCorrectPosition(int position, int maxPosition) {
 	return (0 < position && position <= maxPosition) ? true : false;
 }
 
-Bank inputBank(Bank bank) {
+void inputBank(Bank& bank) {
 
 	cout << "\nEnter the name of the bank:\n";
 	getline(cin, bank.name);
@@ -52,11 +51,9 @@ Bank inputBank(Bank bank) {
 
 	cout << "\nEnter the type of the bank:\n";
 	getline(cin, bank.type);
-
-	return bank;
 }
 
-Bank inputBankServices(Bank bank) {
+void inputBankServices(Bank& bank) {
 
 	string tempService = "Begin";
 	getline(cin, tempService);
@@ -64,32 +61,17 @@ Bank inputBankServices(Bank bank) {
 	while (tempService.find('0') == string::npos && tempService.length() != 1) {
 
 		// input continues until input zero
-		bank.servicesList[bank.servicesListLength] = tempService;
-		bank.servicesListLength++;
+		bank.servicesList.push_back(tempService);
 
 		getline(cin, tempService);
 	}
-
-	return bank;
 }
 
-void removeBank(Banks& banks, int chosenIndex) {
+bool isInList(vector<string> servicesList, string key) {
 
-	for (size_t i = chosenIndex; i < banks.listLength - 1; i++) {
+	for (auto& service : servicesList) {
 
-		// shift to the left side by one element is equal 
-		// to removal due to using static array
-		banks.list[i] = banks.list[i + 1];
-	}
-
-	banks.listLength--;
-}
-
-bool isInList(Bank& bank, string key) {
-
-	for (size_t i = 0; i < bank.servicesListLength; i++) {
-
-		if (bank.servicesList[i] == key) { return true; }
+		if (service == key) { return true; }
 	}
 
 	return false;
@@ -97,14 +79,14 @@ bool isInList(Bank& bank, string key) {
 
 void formBanksList(Banks& banks, Banks& chosenBanks) {
 
-	for (size_t i = 0; i < banks.listLength; i++) {
+	for (size_t i = 0; i < banks.list.size(); i++) {
 
-		if (banks.list[i].type == "State") {
+		if (banks.list.at(i).type == "State") {
 
-			if (isInList(banks.list[i], "Granting a mortgage loan")) {
+			if (isInList(banks.list.at(i).servicesList, "Granting a mortgage loan")) {
 
-				chosenBanks.list[chosenBanks.listLength] = banks.list[i];
-				chosenBanks.listLength++;
+				chosenBanks.list.resize(chosenBanks.list.size() + 1);
+				chosenBanks.list.at(chosenBanks.list.size() - 1) = banks.list.at(i);
 			}
 		}
 	}
@@ -119,13 +101,13 @@ void outputBanks(Banks& banks) {
 		"Address",
 		"Type of ownership",
 		"List of provided services"
-		});
+	});
 
-	for (size_t i = 0; i < banks.listLength; i++) {
+	for (size_t i = 0; i < banks.list.size(); i++) {
 
-		Bank currentBank = banks.list[i];
+		Bank currentBank = banks.list.at(i);
 
-		if (!currentBank.servicesListLength) {
+		if (!currentBank.servicesList.size()) {
 
 			// if there is no entered services for current bank:
 			table.addRow(currentBank.name,
@@ -136,7 +118,7 @@ void outputBanks(Banks& banks) {
 
 		else {
 
-			for (size_t j = 0; j < currentBank.servicesListLength; j++) {
+			for (size_t j = 0; j < currentBank.servicesList.size(); j++) {
 
 				if (!j) {
 
@@ -145,14 +127,14 @@ void outputBanks(Banks& banks) {
 						currentBank.code,
 						currentBank.address,
 						currentBank.type,
-						currentBank.servicesList[j]);
+						currentBank.servicesList.at(j));
 				}
 
 				else {
 
 					// on the second and futher entries 
 					// only services are displayed
-					table.addRow("", "", "", "", currentBank.servicesList[j]);
+					table.addRow("", "", "", "", currentBank.servicesList.at(j));
 				}
 			}
 		}
@@ -181,15 +163,14 @@ int main() {
 
 		case 1: {
 
-			banks.list[banks.listLength] =
-				inputBank(banks.list[banks.listLength]);
-			banks.listLength++;
+			banks.list.resize(banks.list.size() + 1);
+			inputBank(banks.list.at(banks.list.size() - 1));
 			break;
 		}
 
 		case 2: {
 
-			if (!banks.listLength) {
+			if (banks.list.empty()) {
 
 				cerr << "\nBanks list isn't filled. Try again.\n";
 				break;
@@ -197,42 +178,13 @@ int main() {
 
 			int chosenPosition = 0;
 			cout << "\nChose the position of the bank, which services you "
-				"would like to enter (from 1 to " << banks.listLength << "):\n";
+				"would like to enter (from 1 to " << banks.list.size() << "):\n";
 
 			cin >> chosenPosition;
 			cin.clear();
 			cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-			if (!isCorrectPosition(chosenPosition, banks.listLength)) {
-
-				cerr << "\nIncorrect position. Try again.\n";
-				break;
-			}
-
-			chosenPosition--; // position turns into index
-
-			cout << "\nEnter services provided by chosen "
-				"bank (without separators):\n";
-			banks.list[chosenPosition] =
-				inputBankServices(banks.list[chosenPosition]);
-			break;
-		}
-
-		case 3: {
-
-			if (!banks.listLength) {
-
-				cerr << "\nBanks list isn't filled. Try again.\n";
-				break;
-			}
-
-			int chosenPosition = 0;
-			cout << "\nChose the position of the bank, which you "
-				"would like to delete (from 1 to " << banks.listLength << "):\n";
-
-			cin >> chosenPosition;
-
-			if (!isCorrectPosition(chosenPosition, banks.listLength)) {
+			if (!isCorrectPosition(chosenPosition, banks.list.size())) {
 
 				cerr << "\nIncorrect position. Try again.\n";
 				cin.clear();
@@ -242,15 +194,47 @@ int main() {
 
 			chosenPosition--; // position turns into index
 
-			removeBank(banks, chosenPosition);
+			cout << "\nEnter services provided by chosen "
+				"bank (without separators):\n";
+			inputBankServices(banks.list[chosenPosition]);
+			break;
+		}
+
+		case 3: {
+
+			if (banks.list.empty()) {
+
+				cerr << "\nBanks list isn't filled. Try again.\n";
+				break;
+			}
+
+			int chosenPosition = 0;
+			cout << "\nChose the position of the bank, which you "
+				"would like to delete (from 1 to " << banks.list.size() << "):\n";
+
+			cin >> chosenPosition;
+
+			if (!isCorrectPosition(chosenPosition, banks.list.size())) {
+
+				cerr << "\nIncorrect position. Try again.\n";
+				break;
+			}
+
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+			chosenPosition--; // position turns into index
+
+			banks.list.erase(banks.list.begin() + chosenPosition);
 			break;
 		}
 
 		case 4: {
 
 			Banks chosenBanks;
+
 			formBanksList(banks, chosenBanks);
-			if (!chosenBanks.listLength) {
+			if (chosenBanks.list.empty()) {
 
 				cerr << "\nThere are no banks in the "
 					"list that meet the condition.\n"
@@ -276,7 +260,7 @@ int main() {
 
 		outputMenu();
 
-		if (banks.listLength) {
+		if (!banks.list.empty()) {
 
 			cout << "\nCurrent list is:\n";
 			outputBanks(banks);

@@ -17,7 +17,7 @@ Bank inputBank(Bank& bank);
 Bank inputBankServices(Bank& bank);
 void removeBank(Banks& banks, int chosenIndex);
 // checks the existence of required bank parameters:
-bool isInArray(Bank& bank, string key);
+bool isInList(Bank& bank, string key);
 // forms the list of appropriate banks:
 void formBanksList(Banks& banks, Banks& chosenBanks);
 void outputBanks(Banks& banks);
@@ -140,7 +140,7 @@ void removeBank(Banks& banks, int chosenIndex) {
 	resize(banks.list, banks, banks.listLength, banks.listLength - 1);
 }
 
-bool isInArray(Bank& bank, string key) {
+bool isInList(Bank& bank, string key) {
 
 	for (size_t i = 0; i < bank.servicesListLength; i++) {
 
@@ -156,7 +156,7 @@ void formBanksList(Banks& banks, Banks& chosenBanks) {
 
 		if (banks.list[i].type == "State") {
 
-			if (isInArray(banks.list[i], "Granting a mortgage loan")) {
+			if (isInList(banks.list[i], "Granting a mortgage loan")) {
 
 				resize(chosenBanks.list, chosenBanks, 
 					chosenBanks.listLength, chosenBanks.listLength + 1);
