@@ -10,11 +10,11 @@ void outputMenu();
 // checks the correctness of the chosen position of
 // the bank in banks list:
 bool isCorrectPosition(int position, int maxPosition);
-int resize(string*& array, size_t oldLength, size_t newLength);
-int resize(Banks*& array, size_t oldLength, size_t newLength);
+int resize(string*& array, Bank& bank, size_t oldLength, size_t newLength);
+int resize(Bank*& array, Banks& banks, size_t oldLength, size_t newLength);
 // fills the main bank parameters:
-Bank inputBank(Bank bank);
-Bank inputBankServices(Bank bank);
+Bank inputBank(Bank& bank);
+Bank inputBankServices(Bank& bank);
 void removeBank(Banks& banks, int chosenIndex);
 // checks the existence of required bank parameters:
 bool isInArray(Bank& bank, string key);
@@ -40,7 +40,7 @@ bool isCorrectPosition(int position, int maxPosition) {
 	return (0 < position && position <= maxPosition) ? true : false;
 }
 
-int resize(string*& array, size_t oldLength, size_t newLength) {
+int resize(string*& array, Bank& bank, size_t oldLength, size_t newLength) {
 
 	string* resizedArray = new string[newLength];
 
@@ -60,15 +60,16 @@ int resize(string*& array, size_t oldLength, size_t newLength) {
 		}
 	}
 
+	bank.servicesListLength = newLength;
 	delete[] array;
 	array = resizedArray;
 
 	return 1;
 }
 
-int resize(Banks*& array, size_t oldLength, size_t newLength) {
+int resize(Bank*& array, Banks& banks, size_t oldLength, size_t newLength) {
 
-	Banks* resizedArray = new Banks[newLength];
+	Bank* resizedArray = new Bank[newLength];
 
 	if (oldLength < newLength) {
 
@@ -86,15 +87,14 @@ int resize(Banks*& array, size_t oldLength, size_t newLength) {
 		}
 	}
 
+	banks.listLength = newLength;
 	delete[] array;
 	array = resizedArray;
 
 	return 1;
 }
 
-Bank inputBank(Banks& banks) {
-
-	resize(banks, banks.listLength, banks.listLength + 1);
+Bank inputBank(Bank &bank) {
 
 	cout << "\nEnter the name of the bank:\n";
 	getline(cin, bank.name);
@@ -111,7 +111,7 @@ Bank inputBank(Banks& banks) {
 	return bank;
 }
 
-Bank inputBankServices(Bank bank) {
+Bank inputBankServices(Bank &bank) {
 
 	string tempService = "Begin";
 	getline(cin, tempService);
@@ -119,8 +119,8 @@ Bank inputBankServices(Bank bank) {
 	while (tempService.find('0') == string::npos && tempService.length() != 1) {
 
 		// input continues until input zero
-		bank.servicesList[bank.servicesListLength] = tempService;
-		bank.servicesListLength++;
+		resize(bank.servicesList, bank, bank.servicesListLength, bank.servicesListLength + 1);
+		bank.servicesList[bank.servicesListLength - 1] = tempService;
 
 		getline(cin, tempService);
 	}
@@ -137,8 +137,7 @@ void removeBank(Banks& banks, int chosenIndex) {
 	}
 
 	// reducing the real length of the list:
-	resize(banks.list, banks.listLength, banks.listLength - 1);
-	banks.listLength--;
+	resize(banks.list, banks, banks.listLength, banks.listLength - 1);
 }
 
 bool isInArray(Bank& bank, string key) {
@@ -159,8 +158,9 @@ void formBanksList(Banks& banks, Banks& chosenBanks) {
 
 			if (isInArray(banks.list[i], "Granting a mortgage loan")) {
 
-				chosenBanks.list[chosenBanks.listLength] = banks.list[i];
-				chosenBanks.listLength++;
+				resize(chosenBanks.list, chosenBanks, 
+					chosenBanks.listLength, chosenBanks.listLength + 1);
+				chosenBanks.list[chosenBanks.listLength - 1] = banks.list[i];
 			}
 		}
 	}
@@ -223,6 +223,7 @@ int main() {
 
 	// creating the main object (all banks list):
 	Banks banks;
+	/*Banks* banks = &bk;*/
 
 	cout << "\nYour choise is:\n";
 	int chosenTask;
@@ -237,9 +238,11 @@ int main() {
 
 		case 1: {
 
-			banks.list[banks.listLength] =
-				inputBank(banks.list[banks.listLength]);
-			banks.listLength++;
+			resize(banks.list, banks, banks.listLength, banks.listLength + 1);
+
+			banks.list[banks.listLength - 1] =
+				inputBank(banks.list[banks.listLength - 1]);
+
 			break;
 		}
 
@@ -271,7 +274,7 @@ int main() {
 
 			cout << "\nEnter services provided by chosen "
 				"bank (without separators):\n";
-			banks.list[chosenPosition] =
+			banks.list[chosenPosition] = 
 				inputBankServices(banks.list[chosenPosition]);
 			break;
 		}
@@ -293,10 +296,11 @@ int main() {
 			if (!isCorrectPosition(chosenPosition, banks.listLength)) {
 
 				cerr << "\nIncorrect position. Try again.\n";
-				cin.clear();
-				cin.ignore(numeric_limits<streamsize>::max(), '\n');
 				break;
 			}
+
+			cin.clear();
+			cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
 			chosenPosition--; // position turns into index
 
@@ -307,6 +311,7 @@ int main() {
 		case 4: {
 
 			Banks chosenBanks;
+
 			formBanksList(banks, chosenBanks);
 			if (!chosenBanks.listLength) {
 
