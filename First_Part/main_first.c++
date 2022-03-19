@@ -10,7 +10,7 @@ using namespace std;
 void outputMenu();
 // checks the correctness of the chosen position of
 // the bank in banks list:
-bool isCorrectPosition(int position, int maxPosition);
+bool getPosition(Banks& banks, string& code, size_t& position);
 // fills the main bank parameters:
 Bank inputBank(Bank bank);
 Bank inputBankServices(Bank bank);
@@ -34,9 +34,18 @@ void outputMenu() {
 		"5)Enter '0' to close the programm.\n";
 }
 
-bool isCorrectPosition(int position, int maxPosition) {
+bool getPosition(Banks& banks, string& code, size_t& index) {
 
-	return (0 < position && position <= maxPosition) ? true : false;
+	for (size_t i = 0; i < banks.listLength; i++) {
+
+		if (banks.list[i].code == code) {
+
+			index = i;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 Bank inputBank(Bank bank) {
@@ -195,26 +204,26 @@ int main() {
 				break;
 			}
 
-			int chosenPosition = 0;
-			cout << "\nChose the position of the bank, which services you "
-				"would like to enter (from 1 to " << banks.listLength << "):\n";
+			string chosenCode;
+			cout << "\nChose the code of the bank, which services you "
+				"would like to enter:\n";
 
-			cin >> chosenPosition;
-			cin.clear();
-			cin.ignore(numeric_limits<streamsize>::max(), '\n');
+			getline(cin, chosenCode);
+			
+			size_t chosenIndex = -1;
 
-			if (!isCorrectPosition(chosenPosition, banks.listLength)) {
+			if (!getPosition(banks, chosenCode, chosenIndex)) {
 
-				cerr << "\nIncorrect position. Try again.\n";
+				cerr << "\nIncorrect code. Try again.\n";
+				cin.clear();
+				cin.ignore(numeric_limits<streamsize>::max(), '\n');
 				break;
 			}
 
-			chosenPosition--; // position turns into index
-
 			cout << "\nEnter services provided by chosen "
 				"bank (without separators):\n";
-			banks.list[chosenPosition] =
-				inputBankServices(banks.list[chosenPosition]);
+			banks.list[chosenIndex] =
+				inputBankServices(banks.list[chosenIndex]);
 			break;
 		}
 
@@ -226,23 +235,23 @@ int main() {
 				break;
 			}
 
-			int chosenPosition = 0;
-			cout << "\nChose the position of the bank, which you "
-				"would like to delete (from 1 to " << banks.listLength << "):\n";
+			string chosenCode;
+			cout << "\nChose the code of the bank, which you "
+				"would like to delete:\n";
 
-			cin >> chosenPosition;
+			getline(cin, chosenCode);
 
-			if (!isCorrectPosition(chosenPosition, banks.listLength)) {
+			size_t chosenIndex = -1;
 
-				cerr << "\nIncorrect position. Try again.\n";
+			if (!getPosition(banks, chosenCode, chosenIndex)) {
+
+				cerr << "\nIncorrect code. Try again.\n";
 				cin.clear();
 				cin.ignore(numeric_limits<streamsize>::max(), '\n');
 				break;
 			}
 
-			chosenPosition--; // position turns into index
-
-			removeBank(banks, chosenPosition);
+			removeBank(banks, chosenIndex);
 			break;
 		}
 
